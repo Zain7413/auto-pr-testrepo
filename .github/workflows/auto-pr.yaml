@@ -1,0 +1,40 @@
+name: Automatic Follow-up Pull Requests
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  create-follow-up-prs:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      AUTO_PR_TRIGGER_BRANCH: ${{ vars.AUTO_PR_TRIGGER_BRANCH }}
+      EXCLUDE_BRANCHES: ${{ vars.EXCLUDE_BRANCHES }}
+      SKIP_KEYWORD: ${{ vars.SKIP_KEYWORD }}
+
+      SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+      SOURCE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+      TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+
+      ORIGINAL_PR_TITLE: ${{ github.event.pull_request.title }}
+      ORIGINAL_PR_BODY: ${{ github.event.pull_request.body }}
+      ORIGINAL_PR_URL: ${{ github.event.pull_request.html_url }}
+      ORIGINAL_PR_NUMBER: ${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Run automatic PR script
+        run: bash scripts/create_prs.sh
